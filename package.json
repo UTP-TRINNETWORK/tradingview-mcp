@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "node src/server.js",
+    "daemon": "node src/daemon/index.js",
     "tv": "node src/cli/index.js",
     "test": "node --test tests/e2e.test.js tests/pine_analyze.test.js",
     "test:e2e": "node --test tests/e2e.test.js",
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "chrome-remote-interface": "^0.33.2"
+    "chrome-remote-interface": "^0.33.2",
+    "express": "^4.22.2"
   }
 }
