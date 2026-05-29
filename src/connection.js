@@ -2,7 +2,7 @@ import CDP from 'chrome-remote-interface';
 
 let client = null;
 let targetInfo = null;
-const CDP_HOST = 'localhost';
+const CDP_HOST = '127.0.0.1';
 const CDP_PORT = process.env.TV_CDP_PORT ? parseInt(process.env.TV_CDP_PORT, 10) : 9222;
 const MAX_RETRIES = 5;
 const BASE_DELAY = 500;
@@ -59,6 +59,10 @@ export async function getClient() {
     }
   }
   return connect();
+}
+
+export function isConnected() {
+  return client !== null;
 }
 
 export async function connect() {

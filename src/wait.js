@@ -11,9 +11,9 @@ export async function waitForChartReady(expectedSymbol = null, expectedTf = null
   while (Date.now() - start < timeout) {
     const state = await evaluate(`
       (function() {
-        // Check for loading spinner
+        // Check for loading spinner, ignoring non-spinner elements like "loading-eye"
         var spinner = document.querySelector('[class*="loader"]')
-          || document.querySelector('[class*="loading"]')
+          || document.querySelector('[class*="loading"]:not([class*="eye"])')
           || document.querySelector('[data-name="loading"]');
         var isLoading = spinner && spinner.offsetParent !== null;
 
@@ -24,10 +24,17 @@ export async function waitForChartReady(expectedSymbol = null, expectedTf = null
           barCount = bars.length;
         } catch {}
 
-        // Get current symbol from header
-        var symbolEl = document.querySelector('[data-name="legend-source-title"]')
-          || document.querySelector('[class*="title"] [class*="apply-common-tooltip"]');
-        var currentSymbol = symbolEl ? symbolEl.textContent.trim() : '';
+        // Get current symbol from Chart API or header fallback
+        var currentSymbol = '';
+        try {
+          var chart = window.TradingViewApi._activeChartWidgetWV.value();
+          currentSymbol = chart.symbol();
+        } catch (e) {
+          var symbolEl = document.querySelector('[data-name="legend-source-title"]')
+            || document.querySelector('[class*="title"][class*="apply-common-tooltip"]')
+            || document.querySelector('[class*="title"] [class*="apply-common-tooltip"]');
+          currentSymbol = symbolEl ? symbolEl.textContent.trim() : '';
+        }
 
         return { isLoading: !!isLoading, barCount: barCount, currentSymbol: currentSymbol };
       })()
@@ -46,10 +53,14 @@ export async function waitForChartReady(expectedSymbol = null, expectedTf = null
     }
 
     // Check symbol match if expected
-    if (expectedSymbol && state.currentSymbol && !state.currentSymbol.toUpperCase().includes(expectedSymbol.toUpperCase())) {
-      stableCount = 0;
-      await new Promise(r => setTimeout(r, POLL_INTERVAL));
-      continue;
+    if (expectedSymbol && state.currentSymbol) {
+      var normCurrent = state.currentSymbol.toUpperCase().replace(/[^A-Z0-9]/g, '').replace('TETHERUS', 'USDT').replace('TETHER', 'USDT').replace('USD', 'USDT');
+      var normExpected = expectedSymbol.toUpperCase().replace(/[^A-Z0-9]/g, '').replace('TETHERUS', 'USDT').replace('TETHER', 'USDT').replace('USD', 'USDT');
+      if (!normCurrent.includes(normExpected) && !normExpected.includes(normCurrent)) {
+        stableCount = 0;
+        await new Promise(r => setTimeout(r, POLL_INTERVAL));
+        continue;
+      }
     }
 
     // Check bar count stability
@@ -70,3 +81,4 @@ export async function waitForChartReady(expectedSymbol = null, expectedTf = null
   // Timeout — return true anyway, caller should verify
   return false;
 }
+

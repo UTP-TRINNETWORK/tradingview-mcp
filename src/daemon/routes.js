@@ -11,7 +11,7 @@
  */
 
 import { readFileSync } from 'fs';
-import { getClient, evaluate, getChartApi } from '../connection.js';
+import { getClient, evaluate, getChartApi, isConnected } from '../connection.js';
 import { captureScreenshot } from '../core/capture.js';
 import { setSymbol, setTimeframe, getState } from '../core/chart.js';
 import { stateCache } from './state-cache.js';
@@ -231,14 +231,7 @@ export function registerRoutes(app) {
 
   // ─── GET /health ───────────────────────────────────────────────────────────
   app.get('/health', async (req, res) => {
-    let connected = false;
-    try {
-      const client = await getClient();
-      connected = !!client;
-    } catch {
-      connected = false;
-    }
-
+    const connected = isConnected();
     const stats = metrics.getStats();
     const cached = stateCache.getState();
 
